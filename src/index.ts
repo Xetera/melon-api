@@ -2,11 +2,20 @@ import { GraphQLServer } from "graphql-yoga"
 import { albums } from "./request"
 
 const typeDefs = `
+  type Song {
+    name: String!
+    id: String!
+    albumName: String!
+    albumId: String!
+    isTitleTrack: Boolean!
+    title: String!
+  }
   enum AlbumTypes {
     Single,
     EP,
     Album,
-    OST
+    OST,
+    Omniverse
   }
   type Album {
     id: String!
@@ -14,6 +23,7 @@ const typeDefs = `
     koreanName: String!
     melonUrl: String!
     songCount: Int!
+    songs: [Song!]!
     releaseDate: String!
     thumbnail: String
     type: AlbumTypes!
@@ -30,17 +40,10 @@ interface GroupQueryArgs {
 const resolvers = {
   Query: {
     async group(_: any, { id }: GroupQueryArgs) {
-      const e = await albums(id)
-      return e.slice(0, 10)
+      return albums(id)
     },
   },
 }
-
-// const mamamoo = "750053"
-// ;(async () => {
-//   const album = await albums(mamamoo)
-//   return 0
-// })()
 
 const server = new GraphQLServer({ typeDefs, resolvers })
 server.start(() => console.log("Server is running on localhost:4000"))

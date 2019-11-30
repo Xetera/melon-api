@@ -1,5 +1,13 @@
+import * as R from "ramda"
 import { logger } from "./logger"
-import { melonAlbumsUrl, AlbumTypes, extractAlbums } from "./melon-resolvers"
+import {
+  melonAlbumsUrl,
+  AlbumTypes,
+  extractAlbums,
+  extractSongs,
+  melonSongsUrl,
+  matchArtistId,
+} from "./melon-resolvers"
 import axios from "axios"
 import { JSDOM } from "jsdom"
 import { URL } from "url"
@@ -23,14 +31,28 @@ export const request = async (url: string) => {
 }
 
 export const albums = async (artistId: string) => {
-  const url = melonAlbumsUrl(artistId, {
-    size: 100,
-    start: 1,
-    type: AlbumTypes.SINGLES,
+  const albumsUrl = melonAlbumsUrl(artistId, AlbumTypes.SINGLES)
+  const songsUrl = melonSongsUrl(artistId)
+  logger.debug(albumsUrl)
+  const [albumsDoc, songsDoc] = await Promise.all([
+    request(albumsUrl),
+    request(songsUrl),
+  ])
+  // const songsDoc = await request(songsUrl)
+  // const possibleArtistLinks = Array.from(
+  //   albumsDoc.querySelectorAll("a[href^='javascript']")
+  // ).map(e => e.getAttribute("href") ?? "")
+
+  // const  = findMap(possibleArtistLinks, matchArtistId)
+  const albums = extractAlbums(albumsDoc)
+  const songs = extractSongs(songsDoc)
+  const organizedSongs = R.groupBy(a => a.albumId ?? "__unknown__", songs)
+  const newAlbum = albums.map(album => {
+    return {
+      ...album,
+      songs: organizedSongs[album.id ?? ""] ?? [],
+    }
   })
-  logger.debug(url)
-  const a = await request(url)
-  const albums = extractAlbums(a)
-  console.log(albums[0])
-  return albums
+  // console.log(albums[0])
+  return newAlbum
 }
