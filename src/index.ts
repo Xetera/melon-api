@@ -15,7 +15,8 @@ const typeDefs = `
     EP,
     Album,
     OST,
-    Omniverse
+    Omniverse,
+    Remix
   }
   type Album {
     id: String!

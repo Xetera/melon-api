@@ -54,6 +54,7 @@ export const typeTranslations: Record<string, string> = {
   싱글: "Single",
   // no clue what the hell this is
   옴니버스: "Omniverse",
+  리믹스: "Remix",
 }
 
 export interface SongTitle {
@@ -128,6 +129,8 @@ const extractAlbum = (album: Element) => {
 }
 
 export const extractAlbums = (document: Document) => {
-  const albums = Array.from(document.querySelectorAll(".d_album_list ul li"))
+  const albums = Array.from(
+    document.querySelectorAll(".d_album_list > ul > li")
+  )
   return albums.map(extractAlbum)
 }

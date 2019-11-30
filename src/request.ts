@@ -10,16 +10,15 @@ import {
 } from "./melon-resolvers"
 import axios from "axios"
 import { JSDOM } from "jsdom"
-import { URL } from "url"
 
 export const melonBaseUrl = "https://www.melon.com/"
 
 export const melon = axios.create({
   baseURL: melonBaseUrl,
   timeout: 2000,
-  // headers: {
-  //   "User-Agent": "Graphql Melon API (in dev)",
-  // },
+  headers: {
+    "User-Agent": "GraphQL Melon API (in dev)",
+  },
 })
 
 export const request = async (url: string) => {
@@ -38,21 +37,16 @@ export const albums = async (artistId: string) => {
     request(albumsUrl),
     request(songsUrl),
   ])
-  // const songsDoc = await request(songsUrl)
-  // const possibleArtistLinks = Array.from(
-  //   albumsDoc.querySelectorAll("a[href^='javascript']")
-  // ).map(e => e.getAttribute("href") ?? "")
-
-  // const  = findMap(possibleArtistLinks, matchArtistId)
   const albums = extractAlbums(albumsDoc)
   const songs = extractSongs(songsDoc)
   const organizedSongs = R.groupBy(a => a.albumId ?? "__unknown__", songs)
+  // Sometimes albums reference removed songs that don't show up in
+  // the songs list so we have to probably omit those
   const newAlbum = albums.map(album => {
     return {
       ...album,
-      songs: organizedSongs[album.id ?? ""] ?? [],
+      songs: album.id ? organizedSongs[album.id] : [],
     }
   })
-  // console.log(albums[0])
   return newAlbum
 }
