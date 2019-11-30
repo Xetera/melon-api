@@ -34,21 +34,29 @@ const typeDefs = gql`
   }
 `
 
-interface GroupQueryArgs {
+interface IdLookupRequest {
   id: number
 }
 
 const resolvers = {
   Query: {
-    async group(_: any, { id }: GroupQueryArgs) {
+    // async album(_: any, { id }: IdLookupRequest) {
+    //   return
+    // },
+    async group(_: any, { id }: IdLookupRequest) {
       return {
         id,
-        albums: albums(id),
+        albums: await albums(id),
       }
     },
   },
 }
 
-const server = new ApolloServer({ typeDefs, resolvers })
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  playground: true,
+  tracing: process.env.NODE_ENV === "development",
+})
+
 exports.server = server.createHandler()
-// server.start(() => console.log("Server is running on localhost:4000"))
