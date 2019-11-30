@@ -1,50 +1,54 @@
-import { GraphQLServer } from "graphql-yoga"
+import { ApolloServer, gql } from "apollo-server-lambda"
 import { albums } from "./request"
+import { typeTranslations } from "./melon-resolvers"
 
-const typeDefs = `
+const typeDefs = gql`
   type Song {
     name: String!
-    id: String!
+    id: Int!
     albumName: String!
-    albumId: String!
+    albumId: Int!
     isTitleTrack: Boolean!
     title: String!
+    melonUrl: String!
   }
   enum AlbumTypes {
-    Single,
-    EP,
-    Album,
-    OST,
-    Omniverse,
-    Remix
+    ${Object.values(typeTranslations).join(",\n")}
   }
   type Album {
-    id: String!
+    id: Int!
     name: String!
     koreanName: String!
     melonUrl: String!
-    songCount: Int!
     songs: [Song!]!
     releaseDate: String!
     thumbnail: String
     type: AlbumTypes!
   }
+  type Group {
+    id: Int!
+    albums: [Album!]!
+  }
   type Query {
-    group(id: String!): [Album]!
+    group(id: Int!): Group
   }
 `
 
 interface GroupQueryArgs {
-  id: string
+  id: number
 }
 
 const resolvers = {
   Query: {
     async group(_: any, { id }: GroupQueryArgs) {
-      return albums(id)
+      return {
+        id,
+        albums: albums(id),
+      }
     },
   },
 }
 
-const server = new GraphQLServer({ typeDefs, resolvers })
-server.start(() => console.log("Server is running on localhost:4000"))
+const server = new ApolloServer({ typeDefs, resolvers })
+exports.server = server.createHandler()
+// server.start(() => console.log("Server is running on localhost:4000"))

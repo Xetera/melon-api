@@ -2,11 +2,9 @@ import * as R from "ramda"
 import { logger } from "./logger"
 import {
   melonAlbumsUrl,
-  AlbumTypes,
   extractAlbums,
   extractSongs,
   melonSongsUrl,
-  matchArtistId,
 } from "./melon-resolvers"
 import axios from "axios"
 import { JSDOM } from "jsdom"
@@ -29,24 +27,24 @@ export const request = async (url: string) => {
   return dom.window.document
 }
 
-export const albums = async (artistId: string) => {
-  const albumsUrl = melonAlbumsUrl(artistId, AlbumTypes.SINGLES)
+export const albums = async (artistId: number) => {
+  logger.debug(`Received request to crawl for artist: ${artistId}`)
+  const albumsUrl = melonAlbumsUrl(artistId)
   const songsUrl = melonSongsUrl(artistId)
-  logger.debug(albumsUrl)
   const [albumsDoc, songsDoc] = await Promise.all([
     request(albumsUrl),
     request(songsUrl),
   ])
   const albums = extractAlbums(albumsDoc)
   const songs = extractSongs(songsDoc)
-  const organizedSongs = R.groupBy(a => a.albumId ?? "__unknown__", songs)
+  const organizedSongs = R.groupBy(
+    a => (a.albumId ? String(a.albumId) : "__unknown__"),
+    songs
+  )
   // Sometimes albums reference removed songs that don't show up in
   // the songs list so we have to probably omit those
-  const newAlbum = albums.map(album => {
-    return {
-      ...album,
-      songs: album.id ? organizedSongs[album.id] : [],
-    }
-  })
-  return newAlbum
+  return albums.map(album => ({
+    ...album,
+    songs: album.id ? organizedSongs[album.id] : [],
+  }))
 }

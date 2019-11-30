@@ -1,4 +1,4 @@
-import { makeParams, filterMap, findMap } from "./utils"
+import { makeParams, findMap } from "./utils"
 export enum AlbumTypes {
   ALL = 0,
   FULL = 1,
@@ -18,25 +18,21 @@ export interface Album {
   type: "Single" | "EP"
 }
 
-export const melonAlbumsUrl = (
-  artistId: string,
-  listType: AlbumTypes = AlbumTypes.ALL
-) => {
-  const pageSize = 200
-  const startIndex = 0
+export const melonAlbumsUrl = (artistId: number) => {
+  const pageSize = 1000
+  const startIndex = 1
   const queries = makeParams({
     startIndex,
     pageSize,
-    // listType,
     orderBy: "ISSUE_DATE",
     artistId,
   })
   return `artist/albumPaging.htm?${queries}`
 }
 
-export const melonSongsUrl = (artistId: string) => {
-  const pageSize = 500
-  const startIndex = 0
+export const melonSongsUrl = (artistId: number) => {
+  const pageSize = 1000
+  const startIndex = 1
   const queries = makeParams({
     pageSize,
     startIndex,
@@ -46,20 +42,21 @@ export const melonSongsUrl = (artistId: string) => {
   return `/artist/songPaging.htm?${queries}`
 }
 
-export const melonAlbumLinkUrl = (id: string) =>
+export const melonSongLinkUrl = (id: number) =>
+  `https://www.melon.com/song/detail.htm?songId=${id}`
+
+export const melonAlbumLinkUrl = (id: number) =>
   `https://www.melon.com/album/detail.htm?albumId=${id}`
 
 export const typeTranslations: Record<string, string> = {
   정규: "Album",
   싱글: "Single",
+  EP: "EP",
+  OST: "OST",
   // no clue what the hell this is
   옴니버스: "Omniverse",
   리믹스: "Remix",
-}
-
-export interface SongTitle {
-  english?: string
-  korean?: string
+  디지털: "Digital",
 }
 
 export const extractSongs = (album: Document) => {
@@ -77,9 +74,10 @@ export const extractSongs = (album: Document) => {
     // instead of matching it with a query selector directly
     const allLinks = Array.from($$("td.t_left div div a")).map(extractHrefLink)
     const albumId = findMap(allLinks, matchAlbumId)
-    const id = findMap(allLinks, matchSongId)
+    const id = Number(findMap(allLinks, matchSongId)!)
+    const melonUrl = id && melonSongLinkUrl(id)
 
-    return { title, albumName, isTitleTrack, albumId, id }
+    return { title, albumName, isTitleTrack, albumId, id, melonUrl }
   })
 }
 
@@ -102,30 +100,28 @@ const extractHrefLink = (elem: Element) => {
   return jsLink
 }
 
-const createJsLinkMatcher = (resource: string) => (
+const createIdMatcher = (resource: string) => (
   doc: string
-): string | undefined => {
+): number | undefined => {
   const matcher = new RegExp(`go${resource}Detail\\((.*)\\)`, "i")
   const quotedText = doc.match(matcher)?.[1]
-  return quotedText?.slice(1, -1)
+  return Number(quotedText?.slice(1, -1))
 }
 
-export const matchAlbumId = createJsLinkMatcher("Album")
-export const matchSongId = createJsLinkMatcher("Song")
-export const matchArtistId = createJsLinkMatcher("Artist")
+export const matchAlbumId = createIdMatcher("Album")
+export const matchSongId = createIdMatcher("Song")
+export const matchArtistId = createIdMatcher("Artist")
 
 const extractAlbum = (album: Element) => {
   const $ = album.querySelector.bind(album)
   const type = resolveType($(".vdo_name")?.textContent ?? "")
   const releaseDate = $(".cnt_view")?.textContent
   const thumbnail = $(".thumb img")?.getAttribute("src")
-  const songCountStr = $(".tot_song")?.textContent ?? ""
-  const songCount = Number(songCountStr.split("곡").shift())
   // [atist] typo intentional
-  const id = matchAlbumId($(".atist_info dt a")?.getAttribute("href") ?? "")
+  const id = Number(matchAlbumId($(".atist_info dt a")!.getAttribute("href")!)!)
   const melonUrl = id && melonAlbumLinkUrl(id)
   const name = $(".vdo_name + * + a")?.textContent
-  return { type, releaseDate, thumbnail, songCount, melonUrl, name, id }
+  return { type, releaseDate, thumbnail, melonUrl, name, id }
 }
 
 export const extractAlbums = (document: Document) => {

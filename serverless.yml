@@ -1,0 +1,21 @@
+service: melon-api
+app: melon-api
+org: xetera
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  # ya know, cuz it's closer to korea
+  region: us-west-1
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-offline
+
+functions:
+  graphql:
+    handler: src/index.server
+    events:
+      - http:
+          method: post
+          path: graphql
