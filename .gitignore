@@ -3,4 +3,6 @@ node_modules/
 coverage/
 .cache/
 .env
+.serverless
+.build
 junit.xml
