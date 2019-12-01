@@ -1,13 +1,23 @@
 import { ApolloServer, gql } from "apollo-server-lambda"
-import { albums } from "./request"
+import { albums, search } from "./request"
 import { typeTranslations } from "./melon-resolvers"
 
 const typeDefs = gql`
+  type Artist {
+    actType: String
+    id: String!
+    name: String!
+    image: String
+    melonUrl: String!
+    nationality: String
+    sex: String!
+  }
   type Song {
     name: String!
     id: Int!
     albumName: String!
     albumId: Int!
+    albumImage: String
     isTitleTrack: Boolean!
     title: String!
     melonUrl: String!
@@ -20,7 +30,7 @@ const typeDefs = gql`
     name: String!
     koreanName: String!
     melonUrl: String!
-    songs: [Song!]!
+    songs: [Song!]
     releaseDate: String!
     thumbnail: String
     type: AlbumTypes!
@@ -29,7 +39,12 @@ const typeDefs = gql`
     id: Int!
     albums: [Album!]!
   }
+  type SearchResult {
+    artists: [Artist!]!
+    songs: [Song!]!
+  }
   type Query {
+    search(keyword: String!): SearchResult!
     group(id: Int!): Group
   }
 `
@@ -40,13 +55,13 @@ interface IdLookupRequest {
 
 const resolvers = {
   Query: {
-    // async album(_: any, { id }: IdLookupRequest) {
-    //   return
-    // },
+    async search(_: any, { keyword }: { keyword: string }) {
+      return search(keyword)
+    },
     async group(_: any, { id }: IdLookupRequest) {
       return {
         id,
-        albums: await albums(id),
+        albums: albums(id),
       }
     },
   },

@@ -1,4 +1,5 @@
-import { makeParams, findMap } from "./utils"
+import { findMap } from "./utils"
+import { melonAlbumLinkUrl, melonSongLinkUrl } from "./urls"
 export enum AlbumTypes {
   ALL = 0,
   FULL = 1,
@@ -18,36 +19,6 @@ export interface Album {
   type: "Single" | "EP"
 }
 
-export const melonAlbumsUrl = (artistId: number) => {
-  const pageSize = 1000
-  const startIndex = 1
-  const queries = makeParams({
-    startIndex,
-    pageSize,
-    orderBy: "ISSUE_DATE",
-    artistId,
-  })
-  return `artist/albumPaging.htm?${queries}`
-}
-
-export const melonSongsUrl = (artistId: number) => {
-  const pageSize = 1000
-  const startIndex = 1
-  const queries = makeParams({
-    pageSize,
-    startIndex,
-    orderBy: "ISSUE_DATE",
-    artistId,
-  })
-  return `/artist/songPaging.htm?${queries}`
-}
-
-export const melonSongLinkUrl = (id: number) =>
-  `https://www.melon.com/song/detail.htm?songId=${id}`
-
-export const melonAlbumLinkUrl = (id: number) =>
-  `https://www.melon.com/album/detail.htm?albumId=${id}`
-
 export const typeTranslations: Record<string, string> = {
   정규: "Album",
   싱글: "Single",
@@ -56,6 +27,7 @@ export const typeTranslations: Record<string, string> = {
   // no clue what the hell this is
   옴니버스: "Omniverse",
   리믹스: "Remix",
+  라이브: "Live",
   디지털: "Digital",
 }
 
@@ -66,7 +38,7 @@ export const extractSongs = (album: Document) => {
   return rows.map(row => {
     const $ = row.querySelector.bind(row)
     const $$ = row.querySelectorAll.bind(row)
-    const title = $("td + td.no + td.t_left a.btn")?.textContent
+    const name = $("td + td.no + td.t_left a.btn")?.textContent
     const albumName = $("td + td.no + td.t_left + td + td a")?.textContent
     const isTitleTrack = Boolean($("span.title"))
     // the links are laid out in a very weird way here so
@@ -74,10 +46,9 @@ export const extractSongs = (album: Document) => {
     // instead of matching it with a query selector directly
     const allLinks = Array.from($$("td.t_left div div a")).map(extractHrefLink)
     const albumId = findMap(allLinks, matchAlbumId)
-    const id = Number(findMap(allLinks, matchSongId)!)
-    const melonUrl = id && melonSongLinkUrl(id)
-
-    return { title, albumName, isTitleTrack, albumId, id, melonUrl }
+    const id = Number(findMap(allLinks, matchSongId)!)!
+    const melonUrl = melonSongLinkUrl(id)
+    return { name, albumName, isTitleTrack, albumId, id, melonUrl }
   })
 }
 
@@ -118,10 +89,19 @@ const extractAlbum = (album: Element) => {
   const releaseDate = $(".cnt_view")?.textContent
   const thumbnail = $(".thumb img")?.getAttribute("src")
   // [atist] typo intentional
-  const id = Number(matchAlbumId($(".atist_info dt a")!.getAttribute("href")!)!)
-  const melonUrl = id && melonAlbumLinkUrl(id)
+  const id = Number(
+    matchAlbumId($(".atist_info dt a")!.getAttribute("href")!)!
+  )!
+  const melonUrl = melonAlbumLinkUrl(id)
   const name = $(".vdo_name + * + a")?.textContent
-  return { type, releaseDate, thumbnail, melonUrl, name, id }
+  return {
+    type,
+    releaseDate,
+    thumbnail,
+    melonUrl,
+    name,
+    id,
+  }
 }
 
 export const extractAlbums = (document: Document) => {

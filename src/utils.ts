@@ -23,3 +23,18 @@ export const findMap = <T, K>(
     return f(out)
   }
 }
+
+/**
+ * There's almost certainly a correct way to
+ * type this properly using mapped types but
+ * I can't be bothered
+ */
+export const transformKeyNames = <T>(
+  toTransform: object,
+  source: object
+): T => {
+  return Object.entries(toTransform).reduce((acc, [k, v]) => {
+    acc[(source as any)[k]] = v
+    return acc
+  }, {} as any)
+}
