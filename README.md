@@ -1,43 +1,40 @@
-# Typescript Starter
+# Melon API
 
-[![Actions Status](https://github.com/Xetera/typescript-starter/workflows/CI%20Checks/badge.svg)](https://github.com/xetera/typescript-starter/actions)
+An unofficial graphql api that lets you query data from https://melon.com
 
-![banner](https://d2eip9sf3oo6c2.cloudfront.net/series/covers/000/000/052/full/EGH_Typescript_Plumbing_banner.png?1463413763)
+## API Endpoint
 
-Starter Node.js project that includes Typescript tooling I end up installing for most of my Node.js repos.
+https://melon.mykpoplist.com/graphql
 
-## Installation
+```graphql
+query TwiceSongs {
+  group(id: 905701) {
+    albums {
+      id
+      name
+      melonUrl
+      releaseDate
+      thumbnail
+      type
+      songs {
+        melonUrl
+        isTitleTrack
+        albumId
+        name
+        id
+      }
+    }
+  }
+}
+```
 
-1. `git clone https://github.com/xetera/typescript-starter project`
-2. `cd project`
-3. `yarn`
-4. `cp .env.example .env`
+## Features
 
-## Included tooling
+- [x] Querying artists by id
+- [ ] Querying songs by id
+- [ ] Querying albums by id
+- [ ] Searching by keyword
+- [ ] Chart data (low priority)
+- [ ] Subscriptions (low priority)
 
-- Prettier
-- Eslint
-- Jest
-- Fast Check
-- TS Node
-- Docker
-- Github Actions
-
-## Dependencies
-
-- Dotenv
-- Winston
-
-### Why ~~no~~ yarn
-
-~~I don't think Yarn is relevant in 2019 anymore. I personally believe that the JS community is divided enough in its tooling already and we don't need even more fragmentation. Stick with npm.~~
-
-Yarn allows for using workspaces which is very useful and more flexible than lerna. It's too good to pass up.
-
-### Why no semicolons
-
-Idk I think no semi looks nicer.
-
-### Why no gulp/grunt
-
-It's 2019
+> API developed for [mykpoplist](https://github.com/xetera/mykpoplist)
