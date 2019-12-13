@@ -1,5 +1,5 @@
-import { ApolloServer, gql } from "apollo-server-lambda"
-import { albums, search } from "./request"
+import { ApolloServer, gql, UserInputError } from "apollo-server-lambda"
+import { albums, search, getGroup } from "./request"
 import { typeTranslations } from "./melon-resolvers"
 
 const typeDefs = gql`
@@ -35,7 +35,7 @@ const typeDefs = gql`
     thumbnail: String
     type: AlbumTypes!
   }
-  type Group {
+  type Group @cacheControl(maxAge: 240) {
     id: Int!
     albums: [Album!]!
   }
@@ -45,24 +45,31 @@ const typeDefs = gql`
   }
   type Query {
     search(keyword: String!): SearchResult!
-    group(id: Int!): Group
+    group(id: Int, name: String): Group
   }
 `
 
-interface IdLookupRequest {
-  id: number
+interface LookupRequest {
+  id?: number
+  name?: string
 }
 
 const resolvers = {
   Query: {
+    // group(_: any, { keyword }: { keyword: string }) {
+    //   return
+    // }
     async search(_: any, { keyword }: { keyword: string }) {
       return search(keyword)
     },
-    async group(_: any, { id }: IdLookupRequest) {
-      return {
-        id,
-        albums: albums(id),
+    async group(_: any, { id, name }: LookupRequest) {
+      if (id) {
+        return getGroup(id)
+      } else if (name) {
+        const [first] = await search(name).then(res => res.artists)
+        return getGroup(first.id)
       }
+      throw new UserInputError("Missing either id or name parameter")
     },
   },
 }

@@ -64,18 +64,21 @@ export const albums = async (artistId: number) => {
     request(songsUrl),
   ])
   const albums = extractAlbums(albumsDoc)
-  const songs = extractSongs(songsDoc)
-  const organizedSongs = R.groupBy(
-    a => (a.albumId ? String(a.albumId) : "__unknown__"),
-    songs
-  )
+  const songs = extractSongs(songsDoc).filter(song => song.albumId)
+  const organizedSongs = R.groupBy(song => String(song.albumId), songs)
   // Sometimes albums reference removed songs that don't show up in
   // the songs list so we have to probably omit those
   return albums.map(album => ({
     ...album,
-    songs: album.id ? organizedSongs[album.id] ?? [] : [],
+    songs: album.id ? organizedSongs[album.id] : [],
   }))
 }
+
+export const getGroup = (id: number) =>
+  albums(id).then(albums => ({
+    id,
+    albums,
+  }))
 
 export const search = async (keyword: string) => {
   const { data } = await melon.get<SearchResult>(

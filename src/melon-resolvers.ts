@@ -19,7 +19,7 @@ export interface Album {
   type: "Single" | "EP"
 }
 
-export const typeTranslations: Record<string, string> = {
+export const typeTranslations = {
   정규: "Album",
   싱글: "Single",
   EP: "EP",
@@ -29,6 +29,10 @@ export const typeTranslations: Record<string, string> = {
   리믹스: "Remix",
   라이브: "Live",
   디지털: "Digital",
+  베스트: "Best",
+  비정규: "Special",
+  리메이크: "Remake",
+  재발매: "Rerelease",
 }
 
 export const extractSongs = (album: Document) => {
@@ -57,7 +61,7 @@ export const resolveType = (str: string) => {
   if (!typeK) {
     return "__unknown__"
   }
-  return typeTranslations[typeK] ?? typeK
+  return typeTranslations[typeK as keyof typeof typeTranslations] ?? typeK
 }
 
 const extractHrefLink = (elem: Element) => {
