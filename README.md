@@ -14,7 +14,8 @@ https://melon.mykpoplist.com/graphql
     genre
     name
     gender
-    type thumbnail
+    type
+    thumbnail
     activity
     debut
     melon_id
